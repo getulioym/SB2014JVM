@@ -9,8 +9,8 @@
 
 
 typedef struct {
-	u1 tag;
-	union {
+	u4 tag;
+	union {	// todos os membros tem tamanho 4 bytes
 		u2 name_index;	// Class
 		struct {		// Fieldref, Methodref, IMethodref
 			u2 class_index;
@@ -44,6 +44,11 @@ typedef struct {
 	attribute_info *attributes;
 } method_info;
 
+typedef struct field_index_t {
+	u2 type;
+	u2 index;
+} field_index;
+
 class Class {
 public:
 	u4 magic;
@@ -62,7 +67,8 @@ public:
 	method_info *methods;
 	u2 attributes_count;
 	attribute_info *attributes;
-	u2 *static_fields_table;
+	u2 static_fields_count;
+	field_index *static_fields_table;
 	u4 *static_fields;
 	
 	u1 *get_class_name();
@@ -75,8 +81,8 @@ public:
 	u1 *get_method_descriptor(u4);
 	u1 *get_utf8(u4);
 	
-	void initialize();
-	u2 count_static_field();
+	void make_static_fields();
+	u2 make_fields_table();
 	
 	void print_class();
 	void print_cp();

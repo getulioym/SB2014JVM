@@ -1,20 +1,13 @@
-#ifndef DEFINITION
-#define DEFINITION
+#ifndef ACCESS_FLAG
+#define ACCESS_FLAG
 
-#include <stdio.h>
-#include <stdint.h>
+#ifndef __cplusplus
 
+#include <stdbool.h>
 
-#define TYPE_BYTE	'B'
-#define TYPE_CHAR	'C'
-#define TYPE_SHORT	'S'
-#define TYPE_INT	'I'
-#define TYPE_LONG	'J'
-#define TYPE_FLOAT	'F'
-#define TYPE_DOUBLE	'D'
-#define TYPE_BOOL	'Z'
-#define TYPE_CLASS	'L'
-#define TYPE_ARRAY	'['
+#endif
+
+#include "definition.hpp"
 
 #define ACC_PUBLIC		0x0001
 #define ACC_PRIVATE		0x0002
@@ -32,9 +25,20 @@
 #define ACC_SYNTHETIC	0x1000
 #define ACC_ENUM		0x4000
 
-typedef uint8_t		u1;
-typedef uint16_t	u2;
-typedef uint32_t	u4;
-
+bool isPublic(u2);
+bool isPrivate(u2);
+bool isProtected(u2);
+bool isStatic(u2);
+bool isFinal(u2);
+bool isSuper(u2);
+bool isBridge(u2);
+bool isVoratile(u2);
+bool isVarargs(u2);
+bool isNative(u2);
+bool isInterface(u2);
+bool isAbstract(u2);
+bool isSrict(u2);
+bool isSynthetic(u2);
+bool isEnum(u2);
 
 #endif

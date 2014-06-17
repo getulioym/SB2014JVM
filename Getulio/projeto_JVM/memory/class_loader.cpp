@@ -3,7 +3,7 @@
 //#define CLASSFILE "Test1.class"
 //#define DEV
 
-#define JAVA6VER 50
+#define JAVA6VER 0x32
 
 cp_info *cp_loader(FILE *, u2);
 u2 *interface_loader(FILE *, u2);
@@ -16,53 +16,65 @@ u2 read_u2(FILE *);
 u4 read_u4(FILE *);
 u1 *read_n(FILE *, u4);
 
-Class *ClassLoader::new_class(u1 *name) {
+
+
+Class ClassLoader::load_class(u1 *name) {
 	FILE *fp;
 	char name_buff[100];
-	temp = NULL;
+	//temp = NULL;
 	
 	strcpy(name_buff, (char *)name);
 	strcat(name_buff, ".class");
 	
-	if( (fp = fopen(name_buff, "rb")) == NULL)
-		return NULL;
-	
+	if( (fp = fopen(name_buff, "rb")) == NULL) {
+		printf("ClassNotFoundException: %s\n", name_buff);
+		exit(0);
+	}
+	/*
 	if( (temp = new Class) == NULL) {
+		printf("MemoryAllocationException\n");
 		fclose(fp);
-		return NULL;
+		exit(0);
+	}
+	*/
+	
+	// Chegem de magic number 
+	temp.magic = read_u4(fp);
+	if(temp.magic != 0xCAFEBABE) {
+		printf("ClassFormatError: Incompatible magic value %08X\n", temp.magic);
+		//delete temp;
+		fclose(fp);
+		exit(0);
 	}
 	
-	temp->magic = read_u4(fp);
-	if(temp->magic != 0xCAFEBABE) {
-		delete temp;
-		fclose(fp);
-		return NULL;
-	}
-	
-	temp->major_version = read_u2(fp);
-	temp->minor_version = read_u2(fp);
-	int version = temp->major_version + temp->minor_version;
+	// Chegem de versao
+	temp.major_version = read_u2(fp);
+	temp.minor_version = read_u2(fp);
+	int version = temp.major_version + temp.minor_version;
 	if(version > JAVA6VER) {
-		delete temp;
+		printf("UnsupportedClassVersionError: %d\n", version);
+		//delete temp;
 		fclose(fp);
-		return NULL;
+		exit(0);
 	}
 	
-	temp->cp_count = read_u2(fp);
-	temp->constant_pool = cp_loader(fp, temp->cp_count);
-	temp->access_flags = read_u2(fp);
-	temp->this_class = read_u2(fp);
-	temp->super_class = read_u2(fp);
-	temp->interfaces_count = read_u2(fp);
-	temp->interfaces = interface_loader(fp, temp->interfaces_count);
-	temp->fields_count = read_u2(fp);
-	temp->fields = field_loader(fp, temp->fields_count);
-	temp->methods_count = read_u2(fp);
-	temp->methods = method_loader(fp, temp->methods_count);
-	temp->attributes_count = read_u2(fp);
-	temp->attributes = attribute_loader(fp, temp->attributes_count);
+	temp.cp_count = read_u2(fp);
+	temp.constant_pool = cp_loader(fp, temp.cp_count);
+	temp.access_flags = read_u2(fp);
+	temp.this_class = read_u2(fp);
+	temp.super_class = read_u2(fp);
+	temp.interfaces_count = read_u2(fp);
+	temp.interfaces = interface_loader(fp, temp.interfaces_count);
+	temp.fields_count = read_u2(fp);
+	temp.fields = field_loader(fp, temp.fields_count);
+	temp.methods_count = read_u2(fp);
+	temp.methods = method_loader(fp, temp.methods_count);
+	temp.attributes_count = read_u2(fp);
+	temp.attributes = attribute_loader(fp, temp.attributes_count);
 	
 	fclose(fp);
+	
+	temp.make_static_fields();
 	
 	return temp;
 }
@@ -99,12 +111,11 @@ cp_info *cp_loader(FILE *fp, u2 n) {
 }
 
 u2 *interface_loader(FILE *fp, u2 n) {
-	if(n<=0) 
+	if(n == 0) 
 		return NULL;
 
 	u2 *interfaces = NULL;
 	
-	n++;
 	interfaces = new u2[n];
 	for(int i=0; i<n; i++)
 		interfaces[i] = read_u2(fp);
@@ -113,14 +124,13 @@ u2 *interface_loader(FILE *fp, u2 n) {
 }
 
 field_info *ClassLoader::field_loader(FILE *fp, u2 n) {
-	if(n<=0) 
+	if(n == 0) 
 		return NULL;
 		
 	field_info *f = NULL;
 	
-	n++;
 	f = new field_info[n];
-	for(int i=1; i<n; i++) {
+	for(int i=0; i<n; i++) {
 		f[i].access_flags = read_u2(fp);
 		f[i].name_index = read_u2(fp);
 		f[i].descriptor_index = read_u2(fp);
@@ -132,14 +142,13 @@ field_info *ClassLoader::field_loader(FILE *fp, u2 n) {
 }
 
 method_info *ClassLoader::method_loader(FILE *fp, u2 n) {
-	if(n<=0) 
+	if(n == 0) 
 		return NULL;
 	
 	method_info *m = NULL;
 	
-	n++;
 	m = new method_info[n];
-	for(int i=1; i<n; i++) {
+	for(int i=0; i<n; i++) {
 		m[i].access_flags = read_u2(fp);
 		m[i].name_index = read_u2(fp);
 		m[i].descriptor_index = read_u2(fp);
@@ -150,9 +159,8 @@ method_info *ClassLoader::method_loader(FILE *fp, u2 n) {
 	return m;
 }
 
-#define ATTRIBUTE_TEST
 attribute_info *ClassLoader::attribute_loader(FILE *fp, u2 n) {
-	if(n<=0) 
+	if(n == 0) 
 		return NULL;
 	
 	attribute_info *a = NULL;
@@ -163,8 +171,10 @@ attribute_info *ClassLoader::attribute_loader(FILE *fp, u2 n) {
 		u4 length;
 		
 		a[i].name_index = read_u2(fp);
-		name = temp->get_utf8(a[i].name_index);
+		name = temp.get_utf8(a[i].name_index);
 		length = read_u4(fp);
+		
+//#define ATTRIBUTE_TEST
 #ifdef ATTRIBUTE_TEST
 		printf("\nget %s\n",name);
 #endif
