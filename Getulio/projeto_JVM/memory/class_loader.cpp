@@ -16,12 +16,10 @@ u2 read_u2(FILE *);
 u4 read_u4(FILE *);
 u1 *read_n(FILE *, u4);
 
-
-
-Class ClassLoader::load_class(u1 *name) {
+Class *ClassLoader::load_class(u1 *name) {
 	FILE *fp;
 	char name_buff[100];
-	//temp = NULL;
+	temp = NULL;
 	
 	strcpy(name_buff, (char *)name);
 	strcat(name_buff, ".class");
@@ -30,51 +28,51 @@ Class ClassLoader::load_class(u1 *name) {
 		printf("ClassNotFoundException: %s\n", name_buff);
 		exit(0);
 	}
-	/*
+	
 	if( (temp = new Class) == NULL) {
 		printf("MemoryAllocationException\n");
 		fclose(fp);
 		exit(0);
 	}
-	*/
+	
 	
 	// Chegem de magic number 
-	temp.magic = read_u4(fp);
-	if(temp.magic != 0xCAFEBABE) {
-		printf("ClassFormatError: Incompatible magic value %08X\n", temp.magic);
-		//delete temp;
+	temp->magic = read_u4(fp);
+	if(temp->magic != 0xCAFEBABE) {
+		printf("ClassFormatError: Incompatible magic value %08X\n", temp->magic);
+		delete temp;
 		fclose(fp);
 		exit(0);
 	}
 	
 	// Chegem de versao
-	temp.major_version = read_u2(fp);
-	temp.minor_version = read_u2(fp);
-	int version = temp.major_version + temp.minor_version;
+	temp->major_version = read_u2(fp);
+	temp->minor_version = read_u2(fp);
+	int version = temp->major_version + temp->minor_version;
 	if(version > JAVA6VER) {
 		printf("UnsupportedClassVersionError: %d\n", version);
-		//delete temp;
+		delete temp;
 		fclose(fp);
 		exit(0);
 	}
 	
-	temp.cp_count = read_u2(fp);
-	temp.constant_pool = cp_loader(fp, temp.cp_count);
-	temp.access_flags = read_u2(fp);
-	temp.this_class = read_u2(fp);
-	temp.super_class = read_u2(fp);
-	temp.interfaces_count = read_u2(fp);
-	temp.interfaces = interface_loader(fp, temp.interfaces_count);
-	temp.fields_count = read_u2(fp);
-	temp.fields = field_loader(fp, temp.fields_count);
-	temp.methods_count = read_u2(fp);
-	temp.methods = method_loader(fp, temp.methods_count);
-	temp.attributes_count = read_u2(fp);
-	temp.attributes = attribute_loader(fp, temp.attributes_count);
+	temp->cp_count = read_u2(fp);
+	temp->constant_pool = cp_loader(fp, temp->cp_count);
+	temp->access_flags = read_u2(fp);
+	temp->this_class = read_u2(fp);
+	temp->super_class = read_u2(fp);
+	temp->interfaces_count = read_u2(fp);
+	temp->interfaces = interface_loader(fp, temp->interfaces_count);
+	temp->fields_count = read_u2(fp);
+	temp->fields = field_loader(fp, temp->fields_count);
+	temp->methods_count = read_u2(fp);
+	temp->methods = method_loader(fp, temp->methods_count);
+	temp->attributes_count = read_u2(fp);
+	temp->attributes = attribute_loader(fp, temp->attributes_count);
 	
 	fclose(fp);
 	
-	temp.make_static_fields();
+	temp->make_static_fields();
 	
 	return temp;
 }
@@ -87,23 +85,31 @@ cp_info *cp_loader(FILE *fp, u2 n) {
 	for(int i=1; i<n; i++) {
 		tag = read_u1(fp);
 		cp[i].tag = tag;
-		if( tag == TAG_CLASS) {
-			cp[i].info.name_index = read_u2(fp);
-		} else if( tag == TAG_STRING) {
-			cp[i].info.string_index = read_u2(fp);
+		if( tag == TAG_CLASS ) {
+			cp[i].name_index = read_u2(fp);
+		} if( (tag == TAG_FIELD)  ||
+			(tag == TAG_METHOD) ||
+			(tag == TAG_IMETHOD) ) {
+			cp[i].Ref.class_index = read_u2(fp);
+			cp[i].Ref.name_and_type_index = read_u2(fp);
+		} else if( tag == TAG_STRING ) {
+			cp[i].string_index = read_u2(fp);
+		} else if( (tag == TAG_INTEGER) || (tag == TAG_FLOAT) ) {
+			cp[i].bytes = read_u4(fp);
 		} else if( (tag == TAG_LONG) || (tag == TAG_DOUBLE) ) {
-			cp[i].info.high_bytes = read_u4(fp);
+			cp[i].high_bytes = read_u4(fp);
 			i++;
 			cp[i].tag = tag;
-			cp[i].info.low_bytes = read_u4(fp);
-		} else if(tag == TAG_UTF8) {
+			cp[i].low_bytes = read_u4(fp);
+		} else if( tag == TAG_NAMEANDTYPE ) {
+			cp[i].NameAndType.name_index = read_u2(fp);
+			cp[i].NameAndType.descriptor_index = read_u2(fp);
+		} else if( tag == TAG_UTF8 ) {
 			u2 length = read_u2(fp);
-			cp[i].info.utf8 = new u1[length+1];
+			cp[i].utf8 = new u1[length+1];
 			for(int j=0; j<length; j++)
-				cp[i].info.utf8[j] = read_u1(fp);
-			cp[i].info.utf8[length] = '\0';
-		} else {
-			cp[i].info.bytes = read_u4(fp);
+				cp[i].utf8[j] = read_u1(fp);
+			cp[i].utf8[length] = '\0';
 		}
 	}
 	
@@ -171,11 +177,12 @@ attribute_info *ClassLoader::attribute_loader(FILE *fp, u2 n) {
 		u4 length;
 		
 		a[i].name_index = read_u2(fp);
-		name = temp.get_utf8(a[i].name_index);
+		name = temp->get_utf8(a[i].name_index);
 		length = read_u4(fp);
 		
-//#define ATTRIBUTE_TEST
-#ifdef ATTRIBUTE_TEST
+//#define TEST_ATTRIBUTE
+#ifdef TEST_ATTRIBUTE
+		printf("TEST ATTRIBUTE: closs_loader",name);
 		printf("\nget %s\n",name);
 #endif
 
@@ -195,7 +202,7 @@ attribute_info *ClassLoader::attribute_loader(FILE *fp, u2 n) {
 			a[i].code->attributes_count = read_u2(fp);
 			
 
-#ifdef ATTRIBUTE_TEST			
+#ifdef TEST_ATTRIBUTE			
 			printf("CODE\n");
 			printf("stack %d\n",a[i].code->max_stack);
 			printf("locals %d\n",a[i].code->max_locals);
@@ -220,7 +227,7 @@ attribute_info *ClassLoader::attribute_loader(FILE *fp, u2 n) {
 			for(u2 j=0; j<a[i].exceptions->number_of_exceptions; j++)
 				a[i].exceptions->exception_index_table[j] = read_u2(fp);
 			
-#ifdef ATTRIBUTE_TEST			
+#ifdef TEST_ATTRIBUTE			
 			printf("EXCEPTIONS\n");
 			printf("number of excep %d\n",a[i].exceptions->number_of_exceptions);
 			for(u2 j=0; j<a[i].exceptions->number_of_exceptions; j++)
@@ -234,7 +241,7 @@ attribute_info *ClassLoader::attribute_loader(FILE *fp, u2 n) {
 			for(u4 j=0; j<a[i].info->length; j++)
 				a[i].info->bytes[j] = read_u1(fp);
 
-#ifdef ATTRIBUTE_TEST					
+#ifdef TEST_ATTRIBUTE					
 			printf("INFO\n");
 			printf("info len %d\n",a[i].info->length);
 			for(u2 j=0; j<a[i].info->length; j++)

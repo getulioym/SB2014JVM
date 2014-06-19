@@ -1,6 +1,8 @@
 #ifndef CLASS
 #define CLASS
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "definition.hpp"
@@ -25,7 +27,7 @@ typedef struct {
 			u2 descriptor_index;
 		} NameAndType;
 		u1 *utf8;		// Utf8
-	} info;
+	};
 } cp_info;
 
 typedef struct {
@@ -44,10 +46,6 @@ typedef struct {
 	attribute_info *attributes;
 } method_info;
 
-typedef struct field_index_t {
-	u2 type;
-	u2 index;
-} field_index;
 
 class Class {
 public:
@@ -68,28 +66,44 @@ public:
 	u2 attributes_count;
 	attribute_info *attributes;
 	u2 static_fields_count;
-	field_index *static_fields_table;
+	u4 *static_fields_index;
+	u1 *static_fields_type;
 	u4 *static_fields;
 	
 	u1 *get_class_name();
 	u1 *get_super_name();
-	u4 get_field_index(u1 *);
+	u4 get_field_index(u2);
+	u4 get_cp_field_name_index(u4);
+	u4 get_method_index(u2);
+	u4 get_cp_method_name_index(u4);
 	u1 *get_field_name(u4);
 	u1 *get_field_type(u4);
-	u4 get_method_index(u1 *);
 	u1 *get_method_name(u4);
 	u1 *get_method_descriptor(u4);
+	u1 *get_code(u4);
 	u1 *get_utf8(u4);
 	
 	void make_static_fields();
-	u2 make_fields_table();
+	u2 make_field_index();
+	void test_cp(const char *, u2 , u2);
 	
-	void print_class();
+	void print();
 	void print_cp();
 };
 
-enum cp_tag { ZERO, TAG_UTF8, DOIS, TAG_INTEGER, TAG_FLOAT, TAG_LONG, 
-			  TAG_DOUBLE, TAG_CLASS, TAG_STRING, TAG_FIELD, TAG_METHOD,
-			  TAG_IMETHOD, TAG_NAMEANDTYPE};
+enum cp_tag { 	ZERO, 
+				TAG_UTF8,	//1
+				DOIS, 		
+				TAG_INTEGER,//3 
+				TAG_FLOAT, 	//4
+				TAG_LONG, 	//5
+				TAG_DOUBLE, //6
+				TAG_CLASS, 	//7
+				TAG_STRING, //8
+				TAG_FIELD, 	//9
+				TAG_METHOD,	//10
+				TAG_IMETHOD, //11
+				TAG_NAMEANDTYPE	//12
+			};
 
 #endif
