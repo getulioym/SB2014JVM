@@ -126,7 +126,7 @@ void teste_class_array2() {
 	a = classes.get_classref((u1 *)"Classe1");
 	b = classes.get_classref((u1 *)"Classe2");
 	
-	a->putstatic();
+	//a->putstatic();
 }
 
 void teste_conv() {
