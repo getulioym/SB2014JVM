@@ -12,9 +12,9 @@ public:
 	Class *temp;
 	
 	Class *load_class(u1 *);
-	field_info *field_loader(FILE *, u2);
-	method_info *method_loader(FILE *, u2);
-	attribute_info *attribute_loader(FILE *, u2);
+	Field *field_loader(FILE *, u2);
+	Method *method_loader(FILE *, u2);
+	Attribute *attribute_loader(FILE *, u2);
 };
 
 #endif

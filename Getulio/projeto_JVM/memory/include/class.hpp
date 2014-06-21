@@ -35,16 +35,16 @@ typedef struct {
 	u2 name_index;
 	u2 descriptor_index;
 	u2 attributes_count;
-	attribute_info *attributes;
-} field_info;
+	Attribute *attributes;
+} Field;
 
 typedef struct {
 	u2 access_flags;
 	u2 name_index;
 	u2 descriptor_index;
 	u2 attributes_count;
-	attribute_info *attributes;
-} method_info;
+	Attribute *attributes;
+} Method;
 
 
 class Class {
@@ -60,33 +60,43 @@ public:
 	u2 interfaces_count;
 	u2 *interfaces;
 	u2 fields_count;
-	field_info *fields;
+	Field *fields;
 	u2 methods_count;
-	method_info *methods;
+	Method *methods;
 	u2 attributes_count;
-	attribute_info *attributes;
+	Attribute *attributes;
+	
 	u2 static_fields_count;
-	u4 *static_fields_index;
-	u1 *static_fields_type;
+	int *static_fields_index;
+	u4 static_fields_length;
 	u4 *static_fields;
 	
-	u1 *get_class_name();
-	u1 *get_super_name();
-	u4 get_field_index(u2);
-	u4 get_cp_field_name_index(u4);
-	u4 get_method_index(u2);
-	u4 get_cp_method_name_index(u4);
-	u1 *get_field_name(u4);
-	u1 *get_field_type(u4);
-	u1 *get_method_name(u4);
-	u1 *get_method_descriptor(u4);
-	u1 *get_code(u4);
-	u1 *get_utf8(u4);
+	void putstatic(int, u1, u4 *);
+	void getstatic(int, u1, u4 *);
 	
-	void make_static_fields();
-	u2 make_field_index();
-	void test_cp(const char *, u2 , u2);
 	
+	u1 *get_cp_this_class();
+	u1 *get_cp_super_class();
+	u1 *get_cp_class_name(u2);
+	u1 *get_cp_field_class(u2);
+	u1 *get_cp_field_name(u2);
+	u1 *get_cp_field_type(u2);
+	u1 *get_cp_method_class(u2);
+	u1 *get_cp_method_name(u2);
+	u1 *get_cp_method_descriptor(u2);
+	u1 *get_cp_ref_class(u2);
+	u1 *get_cp_ref_name(u2);
+	u1 *get_cp_ref_descriptor(u2);
+	u1 *get_cp_utf8(u2);
+	
+	int get_field_index(u2);
+	int get_method_index(u2);
+	u1 *get_field_name(int);
+	u1 *get_field_type(int);
+	u1 *get_method_name(int);
+	u1 *get_method_descriptor(int);
+	Code *get_method_code(int);
+		
 	void print();
 	void print_cp();
 };

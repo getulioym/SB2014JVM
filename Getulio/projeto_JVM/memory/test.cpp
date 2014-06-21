@@ -30,8 +30,8 @@ void teste_memorydata() {
 	i2.type = TYPE_CLASS;
 	i1.classref = c;
 	i2.classref = d;
-	i1.make_fields();
-	i2.make_fields();
+	//i1.make_fields();
+	//i2.make_fields();
 	
 	u4 data[2] = {0xADC, 0xFED};
 	i1.put_data(4, TYPE_LONG, data);
@@ -53,7 +53,7 @@ void teste_memorydata_array1() {
 	p = data.new_instance(a);
 	u4 r[5] = {0xABC, 0xFED, 0x54312}; 
 	u4 s[5] = {0};
-	data.putfield(p,6,TYPE_LONG,r);
+	data.putfield(p,6,r,TYPE_LONG);
 	//data.putfield(p,4,TYPE_INT,r+1);
 	//data.putfield(p,5,TYPE_FLOAT,r+2);
 
@@ -70,16 +70,63 @@ void teste_memorydata_array1() {
 
 void teste_memorydata_array2() {
 	MemoryDataArray data(100);
+	ClassArray classes(100);
 	Class *a, *b;
-	ClassLoader cl;
 	u4 sizes[3] = { 4, 3, 4 };
 	const char *types = "[L";
 	u4 p, q;
 	
-	a = cl.load_class((u1 *)"Classe2");
+	a = classes.get_classref((u1 *)"Classe2");
 	p = data.new_array(sizes, (u1 *)types, a);
 	printf("p: %08X\n",p);
 	data.print();
+}
+
+void teste_class_array1() {
+	ClassArray classes(100);
+	Class *a, *b;
+	a = classes.get_classref((u1 *)"Classe1");
+	b = classes.get_classref((u1 *)"Classe2");
+	a->print();
+	a->print_cp();
+	//b->print();
+	//b->print_cp();
+	printf("\n");
+	printf("%s\n", a->get_cp_this_class());
+	printf("%s\n", a->get_cp_super_class());
+	printf("%s\n", a->get_cp_class_name(3));
+	printf("%s\n", a->get_cp_field_class(7));
+	printf("%s\n", a->get_cp_field_name(7));
+	printf("%s\n", a->get_cp_field_type(7));
+	printf("%s\n", a->get_cp_method_class(2));
+	printf("%s\n", a->get_cp_method_name(2));
+	printf("%s\n", a->get_cp_method_descriptor(2));
+
+	/*
+	u1 *get_cp_this_class();
+	u1 *get_cp_super_class();
+	u1 *get_cp_class_name(u2);
+	u1 *get_cp_field_class(u2);
+	u1 *get_cp_field_name(u2);
+	u1 *get_cp_field_type(u2);
+	u1 *get_cp_method_class(u2);
+	u1 *get_cp_method_name(u2);
+	u1 *get_cp_method_descriptor(u2);
+	u1 *get_cp_ref_class(u2);
+	u1 *get_cp_ref_name(u2);
+	u1 *get_cp_ref_descriptor(u2);
+	u1 *get_cp_utf8(u2);
+	*/
+}
+
+void teste_class_array2() {
+	ClassArray classes(100);
+	Class *a, *b;
+	
+	a = classes.get_classref((u1 *)"Classe1");
+	b = classes.get_classref((u1 *)"Classe2");
+	
+	a->putstatic();
 }
 
 void teste_conv() {
@@ -94,7 +141,7 @@ void teste_conv() {
 
 int main() {
 
-	teste_memorydata_array2();
+	teste_class_array1();
 	
 	
 	return 0;

@@ -10,17 +10,18 @@
 class MemoryData {
 public:
 	u4 type;
-	Class *classref;
+	union {
+		Class *classref;
+		u1 data_type;
+	};
 	u4 data_count;
-	u4 *data_index;
-	u1 *data_type;
+	int *data_index;
 	u4	data_length;
 	u4 *data;
 	
-	void put_data(u2, u1, u4 *);
-	void get_data(u2, u1, u4 *);
-	void make_fields();
-	u2 make_fields_index();
+	void put_data(int, u1, u4 *);
+	void get_data(int, u1, u4 *);
+	
 	void print();
 };
 

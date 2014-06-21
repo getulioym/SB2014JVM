@@ -15,7 +15,7 @@ typedef struct  {
 		Code *code;
 		Exceptions *exceptions;
 	};
-} attribute_info;
+} Attribute;
 
 typedef struct  {
  	u2 start_pc;
@@ -37,7 +37,7 @@ struct Code_t  {
 	u2 exception_table_length;
 	exception_table_t *exception_table;
 	u2 attributes_count;
-	attribute_info *attributes;
+	Attribute *attributes;
 };
 
 struct Exceptions_t {

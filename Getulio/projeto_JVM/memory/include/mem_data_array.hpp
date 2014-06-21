@@ -13,10 +13,8 @@ public:
 	MemoryData **data;
 	
 	MemoryDataArray(int);
-	u4 new_instance(Class *);
-	u4 new_array(u4 *, u1 *, Class *);
 	
-	void putfield(u4, u2, u1, u4 *);
+	void putfield(u4, u2, u4 *, u1);
 	u1 getfield(u4, u2, u4 *);
 	/*
 	void iaload();
@@ -41,6 +39,8 @@ public:
 	void arraylength();
 	*/
 	
+	u4 new_instance(Class *);
+	u4 new_array(u4 *, u1 *, Class *);
 	void print();
 };
 

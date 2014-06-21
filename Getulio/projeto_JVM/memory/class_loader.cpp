@@ -7,9 +7,9 @@
 
 cp_info *cp_loader(FILE *, u2);
 u2 *interface_loader(FILE *, u2);
-field_info *field_loader(FILE *, u2);
-method_info *method_loader(FILE *, u2);
-attribute_info *attribute_loader(FILE *, u2);
+Field *field_loader(FILE *, u2);
+Method *method_loader(FILE *, u2);
+Attribute *attribute_loader(FILE *, u2);
 
 u1 read_u1(FILE *);
 u2 read_u2(FILE *);
@@ -72,8 +72,6 @@ Class *ClassLoader::load_class(u1 *name) {
 	
 	fclose(fp);
 	
-	temp->make_static_fields();
-	
 	return temp;
 }
 
@@ -129,66 +127,66 @@ u2 *interface_loader(FILE *fp, u2 n) {
 	return interfaces;
 }
 
-field_info *ClassLoader::field_loader(FILE *fp, u2 n) {
+Field *ClassLoader::field_loader(FILE *fp, u2 n) {
 	if(n == 0) 
 		return NULL;
 		
-	field_info *f = NULL;
+	Field *f = NULL;
 	
-	f = new field_info[n];
+	f = new Field[n];
 	for(int i=0; i<n; i++) {
 		f[i].access_flags = read_u2(fp);
 		f[i].name_index = read_u2(fp);
 		f[i].descriptor_index = read_u2(fp);
 		f[i].attributes_count = read_u2(fp);
-		f[i].attributes = new attribute_info[f[i].attributes_count];
+		f[i].attributes = new Attribute[f[i].attributes_count];
 		f[i].attributes = attribute_loader(fp, f[i].attributes_count);
 	}
 	return f;
 }
 
-method_info *ClassLoader::method_loader(FILE *fp, u2 n) {
+Method *ClassLoader::method_loader(FILE *fp, u2 n) {
 	if(n == 0) 
 		return NULL;
 	
-	method_info *m = NULL;
+	Method *m = NULL;
 	
-	m = new method_info[n];
+	m = new Method[n];
 	for(int i=0; i<n; i++) {
 		m[i].access_flags = read_u2(fp);
 		m[i].name_index = read_u2(fp);
 		m[i].descriptor_index = read_u2(fp);
 		m[i].attributes_count = read_u2(fp);
- 		m[i].attributes = new attribute_info[m[i].attributes_count];
+ 		m[i].attributes = new Attribute[m[i].attributes_count];
 		m[i].attributes = attribute_loader(fp, m[i].attributes_count);
 	}
 	return m;
 }
 
-attribute_info *ClassLoader::attribute_loader(FILE *fp, u2 n) {
+Attribute *ClassLoader::attribute_loader(FILE *fp, u2 n) {
 	if(n == 0) 
 		return NULL;
 	
-	attribute_info *a = NULL;
+	Attribute *a = NULL;
 	
-	a = new attribute_info[n];
+	a = new Attribute[n];
 	for(int i=0; i<n; i++) {
 		u1 *name;
 		u4 length;
 		
 		a[i].name_index = read_u2(fp);
-		name = temp->get_utf8(a[i].name_index);
+		name = temp->get_cp_utf8(a[i].name_index);
 		length = read_u4(fp);
 		
+		if(name == NULL)
+			return NULL;
+			
 //#define TEST_ATTRIBUTE
 #ifdef TEST_ATTRIBUTE
 		printf("TEST ATTRIBUTE: closs_loader",name);
 		printf("\nget %s\n",name);
 #endif
 
-		if(name == NULL)
-			return NULL;
-		
 		
 		if( strcmp((char *)name, "Code") == 0 ) {
 			a[i].code = new Code;
