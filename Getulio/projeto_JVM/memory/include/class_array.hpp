@@ -6,6 +6,7 @@
 
 #include "class.hpp"
 #include "class_loader.hpp"
+#include "access_flag.hpp"
 
 
 class ClassArray {
@@ -17,12 +18,14 @@ public:
 
 	ClassArray(int);
 	
-	void putstatic(u4, u2, u4 *, u1);
-	u1 getstatic(u4, u2, u4 *);
+	void putstatic(Class *, int, u4 *, u1);
+	u1 getstatic(Class *, int, u4 *);
 	
-	Class *new_class(u1 *);
 	Class *get_classref(u1 *);
+	Class *new_class(u1 *);
 	int get_index(u1 *);
+	
+	void print();
 };
 
 #endif

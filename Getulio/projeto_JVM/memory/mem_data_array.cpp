@@ -12,38 +12,60 @@ MemoryDataArray::MemoryDataArray(int m) {
 		data[i] = NULL;
 }
 
-void MemoryDataArray::putfield(u4 instance, u2 cp_index, u4 *data, u1 in_type) {
-	MemoryData *temp = (MemoryData *)instance;
-	int index = temp->classref->get_field_index(cp_index);
-	u1 type = *temp->classref->get_field_type(index);
+void MemoryDataArray::putfield(u4 ref, u2 cp_index, u4 *data, u1 in_type) {
+	MemoryData *instance = (MemoryData *)ref;
+	int index = instance->classref->get_field_index(cp_index);
+	u1 type = *instance->classref->get_field_type(index);
 	
 	if(in_type != type) {
-		printf("Error type %c != %c: mem_data_array\n", type, in_type);
+		printf("Error data type %c != %c: mem_data_array.putfield\n", type, in_type);
 		exit(0);
 	}
-	temp->put_data(index, type, data);
+	if( isStatic( instance->classref->get_field_flags(index) ) ) {
+		printf("Error field is static: mem_data_array.putfield\n");
+		exit(0);
+	}
+	instance->put_data(index, data, type);
 
 //#define TEST_PUTFIELD
 #ifdef TEST_PUTFIELD
 	printf("TEST_PUTFIELD\n")
-	printf("addr %p, value %08X\n",temp, instance);
+	printf("addr %p, value %08X\n",instance, ref);
 	printf("field index %d\n",index);
 	printf("field type %c\n",type);
 #endif
 
 }
 
-u1 MemoryDataArray::getfield(u4 instance, u2 cp_index, u4 *data) {
-	MemoryData *temp = (MemoryData *)instance;
-	int index = temp->classref->get_field_index(cp_index);
-	u1 type = *temp->classref->get_field_type(index);
+u1 MemoryDataArray::getfield(u4 ref, u2 cp_index, u4 *data) {
+	MemoryData *instance = (MemoryData *)ref;
+	int index = instance->classref->get_field_index(cp_index);
+	u1 type = *instance->classref->get_field_type(index);
 
-	temp->get_data(index, type, data);
+	if( isStatic( instance->classref->get_field_flags(index) ) ) {
+		printf("Error field is static: mem_data_array.getfield\n");
+		exit(0);
+	}
+	instance->get_data(index, data, type);
 	return type;
 }
 
+u4 MemoryDataArray::arraylength(u4 ref) {
+	MemoryData *array = (MemoryData *)ref;
+	u4 length = 0;
+	if(array->type != TYPE_ARRAY) {
+		printf("Error not array type %c: mem_data_array.arraylength\n", array->type);
+		exit(0);
+	}
+	length = array->data_count;
+	if(array->array_type == TYPE_ARRAY) {
+		length *= arraylength(array->data[ array->data_index[0] ]);
+	}
+	return length;
+}
+
 u4 MemoryDataArray::new_instance(Class *ref) {
-	MemoryData *m ;
+	MemoryData *m;
 	
 	if( ref->magic != 0xCAFEBABE )  {
 		printf("Error invalid class format: mem_data_array.new_instance\n");
@@ -72,7 +94,7 @@ u4 MemoryDataArray::new_instance(Class *ref) {
 	return (u4)m;
 }
 
-u4 MemoryDataArray::new_array(u4 *a_size, u1 *a_type, Class *ref) {
+u4 MemoryDataArray::new_array(int *a_size, u1 *a_type, Class *ref) {
 	MemoryData *m ;
 	
 	if(a_type[0] != TYPE_ARRAY) {
@@ -84,7 +106,7 @@ u4 MemoryDataArray::new_array(u4 *a_size, u1 *a_type, Class *ref) {
 	size++;
 	
 	m->type = TYPE_ARRAY;
-	m->data_type = a_type[1];
+	m->array_type = a_type[1];
 	
 	m->data_index = new int[ a_size[0] ];
 	m->data_count = a_size[0];
@@ -94,7 +116,7 @@ u4 MemoryDataArray::new_array(u4 *a_size, u1 *a_type, Class *ref) {
 	
 	if(a_type[1] == TYPE_CLASS) {
 		if(ref == NULL) {
-			printf("Error class ref null: mem_data_array.new_array\n");
+			printf("Error class ref null %s: mem_data_array.new_array\n",a_type);
 			exit(0);
 		}
 		for(u4 i=0; i<m->data_count; i++) {
@@ -126,12 +148,26 @@ u4 MemoryDataArray::new_array(u4 *a_size, u1 *a_type, Class *ref) {
 
 void MemoryDataArray::print() {
 	printf("MemoryDataArray\n");
-	printf("max: %d\tsize:%d\n",max,size);
+	//printf("max: %d\t",max);
+	printf("size:%d\n",size);
 	for(int i=0; i<size; i++) {
-		printf("%d.[%p]\n",i,data[i]);
-		data[i]->print();
-		printf("\n");
+		printf("[%p] %c,",data[i],data[i]->type);
+		//printf("%d.[%p]\n",i,data[i]);
+		//data[i]->print();
+		//printf("\n");
 	}
+	printf("\n");
+}
+
+void MemoryDataArray::print_min() {
+	printf("MemoryDataArray\n");
+	printf("size:%d\n",size);
+	for(int i=0; i<size; i++) {
+		printf("[%p] ",data[i]);
+		data[i]->print_min();
+		printf(", ");
+	}
+	printf("\n");
 }
 
 u4 make_fields_index(MemoryData *d) {
@@ -155,7 +191,7 @@ u4 make_array_index(MemoryData *d) {
 	u4 length = 0;
 	int inc;
 	
-	if( (d->data_type != TYPE_LONG) || (d->data_type != TYPE_DOUBLE) ) {
+	if( (d->array_type != TYPE_LONG) || (d->array_type != TYPE_DOUBLE) ) {
 		inc = 0;
 		length = d->data_count;
 	} else {

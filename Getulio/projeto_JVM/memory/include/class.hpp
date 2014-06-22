@@ -7,7 +7,6 @@
 
 #include "definition.hpp"
 #include "attribute.hpp"
-#include "access_flag.hpp"
 
 
 typedef struct {
@@ -71,8 +70,8 @@ public:
 	u4 static_fields_length;
 	u4 *static_fields;
 	
-	void putstatic(int, u1, u4 *);
-	void getstatic(int, u1, u4 *);
+	void putstatic(int, u4 *, u1);
+	void getstatic(int, u4 *, u1);
 	
 	
 	u1 *get_cp_this_class();
@@ -91,6 +90,9 @@ public:
 	
 	int get_field_index(u2);
 	int get_method_index(u2);
+	int get_field_index_by_name(u1 *);
+	int get_method_index_by_name(u1 *);
+	u2 get_field_flags(int);
 	u1 *get_field_name(int);
 	u1 *get_field_type(int);
 	u1 *get_method_name(int);
@@ -99,6 +101,7 @@ public:
 		
 	void print();
 	void print_cp();
+	void print_statics();
 };
 
 enum cp_tag { 	ZERO, 

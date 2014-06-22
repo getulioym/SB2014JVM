@@ -2,17 +2,17 @@
 
 void test_cp(const char *, u2 , u2, Class * );
 
-void Class::putstatic(int index, u1 in_type, u4 *in_data) {
+void Class::putstatic(int index, u4 *in_data, u1 in_type) {
 	u1 d_type;
 	
 	d_type = *( get_field_type(index) );
 
 	if(d_type != in_type) {
-		printf("Data type error %c != %c: class.pustatic\n",in_type,d_type);
+		printf("Error data type %c != %c: class.pustatic\n",d_type,in_type);
 		exit(0);
 	}
 	if(static_fields_index[index] == -1) {
-		printf("Index value error %d: class.pustatic\n" ,(short)static_fields_index[index]);
+		printf("Error index value %d: class.pustatic\n" ,(short)static_fields_index[index]);
 		exit(0);
 	}
 	
@@ -21,17 +21,17 @@ void Class::putstatic(int index, u1 in_type, u4 *in_data) {
 		static_fields[ static_fields_index[index]+1 ] = in_data[1];
 }
 
-void Class::getstatic(int index, u1 out_type, u4 *out_data) {
+void Class::getstatic(int index, u4 *out_data, u1 out_type) {
 	u1 d_type;
 	
 	d_type = *( get_field_type(index) );
 
 	if(d_type != out_type) {
-		printf("Data type error %c != %c: class.gettatic\n",out_type,d_type);
+		printf("Error data type %c != %c: class.gettatic\n",d_type,out_type);
 		exit(0);
 	}
 	if(static_fields_index[index] == -1) {
-		printf("Index value error %d: class.gettatic\n" ,(short)static_fields_index[index]);
+		printf("Error index value %d: class.gettatic\n" ,(short)static_fields_index[index]);
 		exit(0);
 	}
 	
@@ -110,15 +110,10 @@ u1 *Class::get_cp_utf8(u2 cp_index) {
 }
 
 int Class::get_field_index(u2 cp_index) {
-	int index = -1;
+	int index;
 	u1 *name = get_cp_field_name(cp_index);
 	
-	for(int i=0; i<fields_count; i++) {
-		if(strcmp((char *)name, (char *)get_field_name(i)) == 0) {
-			index = i;
-			break;
-		}
-	}
+	index = get_field_index_by_name(name);
 	if(index == -1) {
 		printf("Error field %s not found: class.get_field_index\n", name);
 		exit(0);
@@ -127,8 +122,31 @@ int Class::get_field_index(u2 cp_index) {
 }
 
 int Class::get_method_index(u2 cp_index) {
-	int index = -1;
+	int index;
 	u1 *name = get_cp_method_name(cp_index);
+	
+	index = get_field_index_by_name(name);
+	if(index == -1) {
+		printf("Error method %s not found: class.get_method_index\n", name);
+		exit(0);
+	}
+	return index;
+}
+
+int Class::get_field_index_by_name(u1 *name) {
+	int index = -1;
+	
+	for(int i=0; i<fields_count; i++) {
+		if(strcmp((char *)name, (char *)get_field_name(i)) == 0) {
+			index = i;
+			break;
+		}
+	}
+	return index;
+}
+
+int Class::get_method_index_by_name(u1 *name) {
+	int index = -1;
 	
 	for(int i=0; i<methods_count; i++) {
 		if(strcmp((char *)name, (char *)get_method_name(i)) == 0) {
@@ -136,11 +154,11 @@ int Class::get_method_index(u2 cp_index) {
 			break;
 		}
 	}
-	if(index == -1) {
-		printf("Error method %s not found: class.get_method_index\n", name);
-		exit(0);
-	}
 	return index;
+}
+
+u2 Class::get_field_flags(int index) {
+	return fields[index].access_flags;
 }
 
 u1 *Class::get_field_name(int index) {
@@ -249,6 +267,26 @@ void Class::print_cp() {
 			printf("tag invalido: %d\n", tag);
 		}
 	}
+}
+
+void Class::print_statics() {
+	printf("Static Fields\n");
+	printf("statics: %d\n", static_fields_count);
+	for(u2 i=0;i<static_fields_count; i++) {
+		if(static_fields_index[i] != -1) {
+			printf("[%d]->[%d] ",i,static_fields_index[i]);
+			u1 d_type;
+			d_type = *( get_field_type(i) );
+			printf("%c| ",d_type);
+			printf("%s\t", get_field_name(i));
+			printf("%08X", static_fields[ static_fields_index[i] ]);
+			if( (d_type == TYPE_LONG) || (d_type == TYPE_DOUBLE) ) {
+				printf("%08X", static_fields[ static_fields_index[i]+1 ]);
+			}
+			printf("\n");
+		}
+	}
+		
 }
 
 void test_cp(const char *func, u2 tag, u2 cp_index, Class *c) {

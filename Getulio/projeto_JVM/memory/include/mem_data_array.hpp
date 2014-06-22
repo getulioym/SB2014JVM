@@ -5,6 +5,7 @@
 
 #include "definition.hpp"
 #include "mem_data.hpp"
+#include "access_flag.hpp"
 
 class MemoryDataArray {
 public:
@@ -16,6 +17,7 @@ public:
 	
 	void putfield(u4, u2, u4 *, u1);
 	u1 getfield(u4, u2, u4 *);
+	u4 arraylength(u4);
 	/*
 	void iaload();
 	void laload();
@@ -25,6 +27,7 @@ public:
 	void baload();
 	void caload();
 	void saload();
+	
 	void iastore();
 	void lastore();
 	void fastore();
@@ -33,15 +36,13 @@ public:
 	void bastore();
 	void castore();
 	void sastore();
-	void newarray();
-	void anewarray();
-	void multianewarray();
-	void arraylength();
+
 	*/
 	
 	u4 new_instance(Class *);
-	u4 new_array(u4 *, u1 *, Class *);
+	u4 new_array(int *, u1 *, Class *);
 	void print();
+	void print_min();
 };
 
 #endif
